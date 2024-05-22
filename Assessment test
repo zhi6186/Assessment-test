@@ -1,0 +1,283 @@
+Personal Info
+Name:Phang Jyh Jye
+Gender: Male
+Phone number: 010-2061860
+Preferred Language: Mandarin, English, Bahasa Malaysia
+Working Experience: Fresh Graduate
+
+Question 1
+<?php
+session_start();
+
+function checkDownload($memberType) {
+    $currentTime = time();
+
+    if (!isset($_SESSION['downloadTime'])) {
+        $_SESSION['downloadTime'] = [];
+    }
+
+    if ($memberType == 'non-member') {
+        if (isset($_SESSION['downloadTime']['lastDownload']) && 
+            ($currentTime - $_SESSION['downloadTime']['lastDownload']) < 5) {
+            return "Too many downloads";
+        }
+        $_SESSION['downloadTime']['lastDownload'] = $currentTime;
+        return "Your download is starting...";
+    } elseif ($memberType == 'member') {
+        if (!isset($_SESSION['downloadTime']['memberDownloads'])) {
+            $_SESSION['downloadTime']['memberDownloads'] = [];
+        }
+
+        $_SESSION['downloadTime']['memberDownloads'] = array_filter(
+            $_SESSION['downloadTime']['memberDownloads'], 
+            function($timestamp) use ($currentTime) {
+                return ($currentTime - $timestamp) < 5;
+            }
+        );
+
+        if (count($_SESSION['downloadTime']['memberDownloads']) >= 2) {
+            $lastDownload = end($_SESSION['downloadTime']['memberDownloads']);
+            if (($currentTime - $lastDownload) < 5) {
+                return "Too many downloads";
+            }
+        }
+
+        $_SESSION['downloadTime']['memberDownloads'][] = $currentTime;
+        return "Your download is starting...";
+    }
+}
+
+$downloadMessageNonMember = "";
+$downloadMessageMember = "";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['nonmemberDownload'])) {
+        $downloadMessageNonMember = checkDownload('non-member');
+    } elseif (isset($_POST['memberDownload'])) {
+        $downloadMessageMember = checkDownload('member');
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Sharing Website</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Photo Sharing Website</h1>
+        
+        <!-- Non-member Form -->
+        <h2>Non-member Download</h2>
+        <form method="POST" action="">
+            <button type="submit" name="nonmemberDownload">Download as Non-member</button>
+        </form>
+        <?php if ($downloadMessageNonMember): ?>
+            <p><?php echo htmlspecialchars($downloadMessageNonMember); ?></p>
+        <?php endif; ?>
+        
+        <!-- Member Form -->
+        <h2>Member Download</h2>
+        <form method="POST" action="">
+            <button type="submit" name="memberDownload">Download as Member</button>
+        </form>
+        <?php if ($downloadMessageMember): ?>
+            <p><?php echo htmlspecialchars($downloadMessageMember); ?></p>
+        <?php endif; ?>
+    </div>
+</body>
+</html>
+
+Question 2
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discount Calculator</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Discount Calculator</h2>
+        <form method="post">
+            <label for="purchaseValue">Enter Purchase Value:</label><br>
+            <input type="number" id="purchaseValue" name="purchaseValue" required><br><br>
+            <button type="submit">Calculate Discount</button>
+        </form>
+        
+        <?php
+            function checkDiscount($purchaseValue) {
+                if ($purchaseValue >= 500) {
+                    // 10% discount for purchases over 500
+                    echo "<p>Discount is: 10%</p>";
+                } elseif ($purchaseValue >= 100) {
+                    // 5% discount for purchases under 500
+                    echo "<p>Discount is: 5%</p>";
+                } else {
+                    // No discount for purchases below 100
+                    echo "<p>Discount is: NO DISCOUNT</p>";
+                }
+            }
+
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $purchaseValue = floatval($_POST['purchaseValue']);
+                checkDiscount($purchaseValue);
+            }
+        ?>
+    </div>
+</body>
+</html>
+
+Question 3
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calculate Days Between Dates</title>
+<style>
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+    .container {
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>Calculate Days Between Dates</h1>
+        <form method="post">
+            <label for="start_date">Start Date:</label>
+            <input type="date" id="start_date" name="start_date" required><br><br>
+            
+            <label for="end_date">End Date:</label>
+            <input type="date" id="end_date" name="end_date" required><br><br>
+            
+            <input type="submit" value="Calculate">
+        </form>
+
+        <?php
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                // Get the form data
+                $start_date = $_POST['start_date'];
+                $end_date = $_POST['end_date'];
+
+                // Convert the dates to DateTime objects
+                $start_date_obj = new DateTime($start_date);
+                $end_date_obj = new DateTime($end_date);
+
+                // Calculate the difference
+                $interval = $start_date_obj->diff($end_date_obj);
+                $days_difference = $interval->days;
+
+                // Determine if the number of days is odd or even
+                $result = ($days_difference % 2 == 0) ? "even" : "odd";
+
+                // Display the result
+                echo "<p>Number of days between $start_date and $end_date = $days_difference</p>";
+                echo "<p>The number of days is $result.</p>";
+            }
+        ?>
+    </div>
+</body>
+</html>
+
+Question 4
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gacha Game Item Distribution</title>
+</head>
+    <body>
+
+        <?php
+
+            // Function to generate a random item based on VIP rank
+            function roll_item($vip_rank) {
+                $chance = rand(1, 100);
+                $item_tier_rarity = [1, 2, 3]; 
+                $vip_modifier = [1, 1.2, 1.5]; // Multiplier for each VIP rank
+                
+                // Adjust the chance based on VIP rank
+                $adjusted_chance = $chance * $vip_modifier[$vip_rank - 1];
+                
+                // Determine the item tier based on adjusted chance
+                if ($adjusted_chance <= 50) {
+                    $item_tier = $item_tier_rarity[0];
+                } elseif ($adjusted_chance <= 75) {
+                    $item_tier = $item_tier_rarity[1];
+                } elseif ($adjusted_chance <= 90) {
+                    $item_tier = $item_tier_rarity[2];
+                } else {
+                    $item_tier = $item_tier_rarity[2];
+                }
+                
+                return $item_tier;
+            }
+
+            // Function to simulate 100 rolls for each VIP rank and return the distribution
+            function simulate_rolls() {
+                $vip_rank = ['v1', 'v2', 'v3']; // v1 = lowest rank
+                $result = '';
+
+                foreach ($vip_rank as $rank) {
+                    $distribution = [1 => 0, 2 => 0, 3 => 0];
+                    
+                    for ($i = 0; $i < 100; $i++) {
+                        $item_tier = roll_item((int)substr($rank, 1));
+                        $distribution[$item_tier]++;
+                    }
+                    
+                    $result .= "<h2>VIP Rank: $rank</h2>\n";
+                    $result .= "<ul>\n";
+                    foreach ($distribution as $tier => $count) {
+                        $result .= "<li>$tier => $count</li>\n";
+                    }
+                    $result .= "</ul>\n";
+                }
+
+                return $result;
+            }
+
+            // Simulate and get the distribution
+            $rolls_distribution = simulate_rolls();
+
+            // Output the results
+            echo $rolls_distribution;
+
+        ?>
+
+    </body>
+</html>
